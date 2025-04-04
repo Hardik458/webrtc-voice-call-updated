@@ -7,6 +7,17 @@ peer.on("open", (id) => {
   document.getElementById("room-id").placeholder = "Your Room ID: " + id;
 });
 
+// This function tries to play audio as soon as possible
+function tryPlayAudio() {
+  if (remoteAudio && remoteAudio.srcObject) {
+    remoteAudio.play().then(() => {
+      console.log("Audio autoplayed");
+    }).catch((err) => {
+      console.warn("Autoplay blocked. Tap anywhere to enable audio.");
+    });
+  }
+}
+
 function joinCall() {
   const roomId = document.getElementById("room-id").value.trim();
 
@@ -18,7 +29,7 @@ function joinCall() {
       call.on("stream", (incomingStream) => {
         remoteStream = incomingStream;
         remoteAudio.srcObject = remoteStream;
-        console.log("Receiving remote stream...");
+        tryPlayAudio();
       });
     })
     .catch((err) => console.error("Failed to get local stream:", err));
@@ -33,20 +44,11 @@ peer.on("call", (incomingCall) => {
       incomingCall.on("stream", (incomingStream) => {
         remoteStream = incomingStream;
         remoteAudio.srcObject = remoteStream;
-        console.log("Connected to remote stream");
+        tryPlayAudio();
       });
     })
     .catch((err) => console.error("Error answering call:", err));
 });
 
-function unlockAudio() {
-  if (remoteAudio && remoteAudio.srcObject) {
-    remoteAudio.play().then(() => {
-      console.log("Audio playback started");
-    }).catch((err) => {
-      console.warn("Manual play required:", err);
-    });
-  } else {
-    alert("No audio stream yet. Please try again after joining the room.");
-  }
-}
+// Bonus: allow user tap anywhere to enable audio in case autoplay fails
+document.body.addEventListener("click", tryPlayAudio, { once: true });
